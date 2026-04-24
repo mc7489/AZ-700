@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AZ-700 Azure Networking — Study Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2236;
+    --border: #1e3a5f;
+    --accent: #00d4ff;
+    --accent2: #0078d4;
+    --accent3: #50fa7b;
+    --warn: #ffb86c;
+    --danger: #ff5555;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --card-h: 340px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* HEADER */
+  header {
+    padding: 32px 0 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 28px;
+  }
+  .header-top {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(26px, 4vw, 42px);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-top: 10px;
+  }
+  h1 span { color: var(--accent); }
+  .subtitle { color: var(--muted); font-size: 12px; margin-top: 6px; letter-spacing: 0.05em; }
+
+  /* TABS */
+  .tabs {
+    display: flex; gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 28px;
+    width: fit-content;
+  }
+  .tab {
+    padding: 8px 20px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .tab.active {
+    background: var(--accent2);
+    color: #fff;
+  }
+
+  /* DOMAIN FILTER */
+  .domain-row {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; align-items: center;
+  }
+  .domain-label { color: var(--muted); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; margin-right: 4px; }
+  .domain-btn {
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .domain-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.08); }
+
+  /* PROGRESS */
+  .progress-bar-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  }
+  .progress-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+  .stat { font-size: 11px; color: var(--muted); }
+  .stat strong { color: var(--text); font-size: 18px; font-family: 'Syne', sans-serif; display: block; }
+  .bar-wrap { flex: 1; min-width: 120px; }
+  .bar-track { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 3px; transition: width 0.4s ease; }
+
+  /* ---- FLASHCARD MODE ---- */
+  #flashcard-mode { display: block; }
+  .card-counter { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .card-counter span { color: var(--accent); font-weight: 600; }
+
+  .card-scene {
+    perspective: 1200px;
+    height: var(--card-h);
+    margin-bottom: 20px;
+    cursor: pointer;
+  }
+  .card-inner {
+    position: relative; width: 100%; height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.55s cubic-bezier(0.4,0.2,0.2,1);
+  }
+  .card-inner.flipped { transform: rotateY(180deg); }
+  .card-face {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    border-radius: 16px;
+    padding: 36px 40px;
+    display: flex; flex-direction: column; justify-content: center;
+    border: 1px solid var(--border);
+  }
+  .card-front {
+    background: var(--surface);
+    background-image: radial-gradient(ellipse at top right, rgba(0,120,212,0.12), transparent 60%);
+  }
+  .card-back {
+    background: var(--surface2);
+    background-image: radial-gradient(ellipse at bottom left, rgba(0,212,255,0.10), transparent 60%);
+    transform: rotateY(180deg);
+  }
+  .card-tag {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 16px;
+  }
+  .card-question {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(16px, 2.5vw, 22px);
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--text);
+  }
+  .card-hint { font-size: 11px; color: var(--muted); margin-top: 20px; }
+  .card-answer {
+    font-size: clamp(13px, 1.8vw, 16px);
+    line-height: 1.65;
+    color: var(--text);
+  }
+  .card-answer strong { color: var(--accent); }
+  .answer-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.15em; color: var(--accent3);
+    text-transform: uppercase; margin-bottom: 14px;
+  }
+
+  .card-controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    padding: 10px 22px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.04em;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-primary { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+  .btn-primary:hover { background: #005a9e; border-color: #005a9e; color: #fff; }
+  .btn-success { background: rgba(80,250,123,0.1); border-color: var(--accent3); color: var(--accent3); }
+  .btn-danger { background: rgba(255,85,85,0.1); border-color: var(--danger); color: var(--danger); }
+  .btn-sm { padding: 6px 14px; font-size: 12px; }
+
+  /* ---- QUIZ MODE ---- */
+  #quiz-mode { display: none; }
+  .quiz-q-label { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent2); margin-bottom: 12px; font-weight: 700; }
+  .quiz-question {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(16px, 2.2vw, 21px);
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    background-image: radial-gradient(ellipse at top right, rgba(0,120,212,0.1), transparent 60%);
+  }
+  .options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+  .option {
+    padding: 14px 20px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: flex-start; gap: 12px;
+    text-align: left;
+  }
+  .option:hover:not(.locked) { border-color: var(--accent2); background: rgba(0,120,212,0.08); }
+  .option.correct { border-color: var(--accent3); background: rgba(80,250,123,0.08); color: var(--accent3); }
+  .option.wrong { border-color: var(--danger); background: rgba(255,85,85,0.08); color: var(--danger); }
+  .option-letter {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--muted);
+    min-width: 20px;
+  }
+  .option.correct .option-letter { color: var(--accent3); }
+  .option.wrong .option-letter { color: var(--danger); }
+  .explanation {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-size: 13px;
+    line-height: 1.7;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .explanation.show { display: block; }
+  .explanation strong { color: var(--accent); }
+
+  /* RESULTS */
+  .results-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    text-align: center;
+    display: none;
+  }
+  .results-panel.show { display: block; }
+  .results-score {
+    font-family: 'Syne', sans-serif;
+    font-size: 72px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .results-panel h2 { font-family: 'Syne', sans-serif; font-size: 24px; margin: 12px 0 8px; }
+  .results-panel p { color: var(--muted); font-size: 13px; }
+
+  /* STUDY GUIDE */
+  #guide-mode { display: none; }
+  .guide-section { margin-bottom: 32px; }
+  .guide-section h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  .guide-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    transition: border-color 0.2s;
+  }
+  .guide-card:hover { border-color: var(--accent2); }
+  .guide-card h3 { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 8px; }
+  .guide-card p { font-size: 11px; color: var(--muted); line-height: 1.65; }
+  .guide-card code { color: var(--accent); font-size: 10px; }
+
+  .domain-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .d0 { background: rgba(0,212,255,0.1); color: var(--accent); }
+  .d1 { background: rgba(0,120,212,0.15); color: #60a5fa; }
+  .d2 { background: rgba(80,250,123,0.1); color: var(--accent3); }
+  .d3 { background: rgba(255,184,108,0.1); color: var(--warn); }
+  .d4 { background: rgba(255,85,85,0.1); color: var(--danger); }
+  .d5 { background: rgba(189,147,249,0.1); color: #bd93f9; }
+
+  .shuffle-info { font-size: 11px; color: var(--muted); margin-left: auto; }
+  footer { border-top: 1px solid var(--border); padding: 24px 0; margin-top: 48px; text-align: center; font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="header-top">
+      <div class="logo">Microsoft Azure Certification</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-sm" onclick="shuffleCards()">⟳ Shuffle</button>
+        <button class="btn btn-sm" onclick="resetProgress()">↺ Reset</button>
+      </div>
+    </div>
+    <h1>AZ-700 <span>Azure Networking</span></h1>
+    <p class="subtitle">113 Questions · 6 Exam Domains · Flashcard + Quiz Modes</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchMode('flashcard')">📇 Flashcards</button>
+    <button class="tab" onclick="switchMode('quiz')">🧪 Quiz</button>
+    <button class="tab" onclick="switchMode('guide')">📖 Study Guide</button>
+  </div>
+
+  <div class="domain-row">
+    <span class="domain-label">Domain:</span>
+    <button class="domain-btn active" onclick="filterDomain('all')">All</button>
+    <button class="domain-btn" onclick="filterDomain(0)">VNet Design</button>
+    <button class="domain-btn" onclick="filterDomain(1)">Routing</button>
+    <button class="domain-btn" onclick="filterDomain(2)">Load Balancing</button>
+    <button class="domain-btn" onclick="filterDomain(3)">Hybrid Connectivity</button>
+    <button class="domain-btn" onclick="filterDomain(4)">Private Access</button>
+    <button class="domain-btn" onclick="filterDomain(5)">Security</button>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-bar-wrap">
+    <div class="progress-stats">
+      <div class="stat"><strong id="stat-seen">0</strong>Seen</div>
+      <div class="stat"><strong id="stat-known">0</strong>Known</div>
+      <div class="stat"><strong id="stat-total">0</strong>Total</div>
+    </div>
+    <div class="bar-wrap">
+      <div class="bar-track"><div class="bar-fill" id="prog-bar" style="width:0%"></div></div>
+    </div>
+    <span class="shuffle-info" id="prog-label">0% complete</span>
+  </div>
+
+  <!-- FLASHCARD MODE -->
+  <div id="flashcard-mode">
+    <div class="card-counter">Card <span id="card-num">1</span> of <span id="card-total">0</span></div>
+    <div class="card-scene" onclick="flipCard()">
+      <div class="card-inner" id="card-inner">
+        <div class="card-face card-front">
+          <div class="card-tag" id="card-domain-tag">Domain</div>
+          <div class="card-question" id="card-question">Loading...</div>
+          <div class="card-hint">↓ Click to reveal answer</div>
+        </div>
+        <div class="card-face card-back">
+          <div class="answer-label">Answer</div>
+          <div class="card-answer" id="card-answer"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-controls">
+      <button class="btn" onclick="prevCard()">← Prev</button>
+      <button class="btn btn-success btn-sm" onclick="markKnown()">✓ Got it</button>
+      <button class="btn btn-danger btn-sm" onclick="markUnknown()">✗ Review</button>
+      <button class="btn btn-primary" onclick="nextCard()">Next →</button>
+    </div>
+  </div>
+
+  <!-- QUIZ MODE -->
+  <div id="quiz-mode">
+    <div id="quiz-area">
+      <div class="quiz-q-label">Question <span id="q-num">1</span> of <span id="q-total">0</span></div>
+      <div class="quiz-question" id="quiz-question"></div>
+      <div class="options" id="options-list"></div>
+      <div class="explanation" id="explanation"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-primary" id="next-quiz-btn" onclick="nextQuizQ()" style="display:none;">Next Question →</button>
+        <button class="btn" onclick="endQuiz()">End Quiz</button>
+      </div>
+    </div>
+    <div class="results-panel" id="results-panel">
+      <div class="results-score" id="results-score">0%</div>
+      <h2 id="results-title"></h2>
+      <p id="results-sub"></p>
+      <br>
+      <button class="btn btn-primary" onclick="restartQuiz()">Retake Quiz</button>
+    </div>
+  </div>
+
+  <!-- STUDY GUIDE MODE -->
+  <div id="guide-mode">
+    <div id="guide-content"></div>
+  </div>
+</div>
+
+<footer>
+  <div class="container">AZ-700: Designing and Implementing Microsoft Azure Networking Solutions · Study Tool</div>
+</footer>
+
+<script>
+const DOMAINS = [
+  'VNet Design & Implementation',
+  'Routing',
+  'Load Balancing & Traffic',
+  'Hybrid Connectivity',
+  'Private Access to Services',
+  'Network Security & Monitoring'
+];
+
+const DOMAIN_CLASS = ['d0','d1','d2','d3','d4','d5'];
+
+// ============================================================
+// FLASHCARDS DATA — 113 cards across 6 domains
+// ============================================================
+const ALL_CARDS = [
+  // ── DOMAIN 0: VNet Design & Implementation ──
+  { d:0, q:'What is a Virtual Network (VNet) in Azure?', a:'A VNet is an isolated private network in Azure that enables resources to securely communicate with each other, the internet, and on-premises networks. It is the fundamental building block for your private network in Azure.' },
+  { d:0, q:'What is the maximum number of VNets per subscription per region?', a:'Azure allows up to <strong>1,000 VNets per subscription per region</strong> by default, though this limit can be increased via a support request.' },
+  { d:0, q:'What address spaces can a VNet use?', a:'A VNet can use any <strong>RFC 1918 private address space</strong>: 10.0.0.0/8, 172.16.0.0/12, or 192.168.0.0/16. Public address spaces are also technically valid but not recommended.' },
+  { d:0, q:'What is VNet Peering and what are its two types?', a:'VNet Peering connects two VNets so resources in each can communicate. The two types are: <strong>Regional Peering</strong> (same Azure region) and <strong>Global Peering</strong> (across different Azure regions).' },
+  { d:0, q:'What are the key properties of VNet Peering traffic?', a:'Peered VNet traffic is <strong>not encrypted</strong>, travels over the Microsoft backbone (not public internet), and has low latency. Traffic does NOT traverse a VPN gateway or NAT unless explicitly configured.' },
+  { d:0, q:'What is a subnet in Azure, and what are its reserved addresses?', a:'A subnet is a range of IPs within a VNet. Azure reserves <strong>5 IP addresses</strong> per subnet: .0 (network), .1 (default gateway), .2 and .3 (DNS), and the last address (broadcast).' },
+  { d:0, q:'What is a Network Security Group (NSG) and where can it be applied?', a:'An NSG is a firewall-like filter containing security rules that allow/deny inbound and outbound traffic. NSGs can be applied to <strong>subnets</strong> and/or individual <strong>network interfaces (NICs)</strong>.' },
+  { d:0, q:'What are the default NSG rules in Azure?', a:'NSGs have 3 default inbound rules: AllowVNetInBound (65000), AllowAzureLoadBalancerInBound (65001), DenyAllInBound (65500). Default outbound: AllowVNetOutBound, AllowInternetOutBound, DenyAllOutBound.' },
+  { d:0, q:'What is a Service Endpoint, and what does it do?', a:'A Service Endpoint extends your VNet identity to Azure services (e.g., Storage, SQL). Traffic from the subnet reaches the service over the <strong>Azure backbone</strong> rather than the public internet, but the service still uses its public IP.' },
+  { d:0, q:'What is the difference between a Service Endpoint and Private Endpoint?', a:'<strong>Service Endpoint</strong>: routes traffic over backbone but the service keeps its public IP. <strong>Private Endpoint</strong>: gives the service a private IP in your VNet, making it fully private. Private Endpoint is the more secure option.' },
+  { d:0, q:'What is a Private DNS Zone in Azure?', a:'A Private DNS Zone lets you host and manage DNS records for resources in your VNet without needing a public DNS domain. It must be <strong>linked</strong> to the VNet for name resolution to work.' },
+  { d:0, q:'What is Azure DNS Private Resolver?', a:'Azure DNS Private Resolver enables conditional forwarding and hybrid DNS resolution without deploying DNS VMs. It consists of <strong>inbound endpoints</strong> (on-prem → Azure) and <strong>outbound endpoints</strong> (Azure → on-prem).' },
+  { d:0, q:'What is a NAT Gateway in Azure?', a:'Azure NAT Gateway provides outbound-only internet connectivity for VNet resources using one or more <strong>static public IPs or prefixes</strong>. It replaces instance-level public IPs for reliable SNAT without port exhaustion.' },
+  { d:0, q:'What are Availability Zones (AZs) and how do they affect VNet design?', a:'AZs are physically separate datacenters in a region. VNets span all AZs in a region automatically. Zone-redundant resources (load balancers, gateways) should be deployed across multiple AZs for high availability.' },
+  { d:0, q:'What is the purpose of a Dedicated Subnet for certain Azure services?', a:'Some services (like Azure Bastion, VPN Gateway, App Gateway) require their own dedicated subnet. These subnets must not contain any other resources and often have specific naming requirements (e.g., <strong>GatewaySubnet</strong>).' },
+  { d:0, q:'What is the minimum subnet size recommended for an Azure Bastion host?', a:'Azure Bastion requires a dedicated subnet named <strong>AzureBastionSubnet</strong> with a minimum size of /26 (64 addresses). Smaller sizes are not supported.' },
+  { d:0, q:'What is Azure Virtual WAN (vWAN)?', a:'Azure Virtual WAN is a networking service that brings together routing, VPN, ExpressRoute, and SD-WAN into a single unified interface managed by Microsoft. It simplifies hub-and-spoke at scale with the <strong>Virtual Hub</strong> at center.' },
+  { d:0, q:'What are the two tiers of Azure Virtual WAN?', a:'<strong>Basic</strong>: supports Site-to-Site VPN only. <strong>Standard</strong>: supports Site-to-Site VPN, Point-to-Site VPN, ExpressRoute, VNet-to-VNet, and inter-hub routing.' },
+  { d:0, q:'What is a Hub-and-Spoke network topology in Azure?', a:'Hub-and-Spoke uses a central VNet (hub) for shared services (firewall, gateway, DNS) connected via peering to multiple spoke VNets. It reduces cost and complexity by centralizing shared networking infrastructure.' },
+  { d:0, q:'How does VNet peering differ from a VPN gateway connection?', a:'<strong>VNet peering</strong> uses the Microsoft backbone directly and is lower latency/higher throughput with no bandwidth limits and no gateway required. <strong>VPN gateway</strong> encrypts traffic but has bandwidth limits tied to the SKU.' },
+
+  // ── DOMAIN 1: Routing ──
+  { d:1, q:'What is a User-Defined Route (UDR) and why is it used?', a:'A UDR is a custom route added to a route table to override Azure\'s system routes. Used to force traffic through a Network Virtual Appliance (NVA), firewall, or specific next-hop instead of the default Azure routing.' },
+  { d:1, q:'What are the three types of next hops available in UDRs?', a:'<strong>1. Virtual Appliance</strong> – route to an NVA IP. <strong>2. VNet Gateway</strong> – route to a VPN/ExpressRoute gateway. <strong>3. None</strong> – drop the traffic (blackhole). Also: Internet, and VNet (local).' },
+  { d:1, q:'What is BGP and how is it used in Azure?', a:'Border Gateway Protocol (BGP) is a dynamic routing protocol used to exchange routes between Azure VPN gateways/ExpressRoute circuits and on-premises networks. BGP enables automatic route propagation and failover.' },
+  { d:1, q:'What is the Azure system route priority order?', a:'Route selection priority: <strong>1</strong> Longest prefix match first. Then by route source: UDR > BGP > System routes. If equal specificity and source, BGP AS-path length is used as tiebreaker.' },
+  { d:1, q:'What is route propagation in Azure and how can you disable it?', a:'By default, Azure VPN gateways propagate routes to subnets via BGP. You can <strong>disable gateway route propagation</strong> on a route table to prevent the gateway from advertising routes to that subnet\'s route table.' },
+  { d:1, q:'What is an NVA (Network Virtual Appliance) in Azure?', a:'An NVA is a VM running networking software (firewall, WAN optimizer, IDS/IPS) from vendors like Palo Alto, Fortinet, or Cisco. UDRs are used to steer traffic through the NVA for inspection.' },
+  { d:1, q:'What is IP forwarding and when must it be enabled?', a:'IP forwarding allows a NIC to receive traffic not destined for its own IP and forward it. It <strong>must be enabled</strong> on any NIC acting as an NVA or router; otherwise Azure will drop traffic not destined for the NIC\'s IP.' },
+  { d:1, q:'What is Azure Route Server?', a:'Azure Route Server simplifies dynamic routing between NVAs and Azure VNets. It uses BGP to <strong>exchange routes between an NVA and the VNet</strong> automatically, eliminating the need for manual UDR management.' },
+  { d:1, q:'What subnet does Azure Route Server require?', a:'Azure Route Server requires a dedicated subnet named <strong>RouteServerSubnet</strong> with a minimum prefix size of /27 within the VNet.' },
+  { d:1, q:'What is the difference between forced tunneling and split tunneling?', a:'<strong>Forced tunneling</strong>: all internet traffic from Azure VMs is redirected to on-premises (via UDR with next-hop VNet Gateway, overriding the default internet route). <strong>Split tunneling</strong>: only specific traffic goes on-prem; internet traffic exits directly from Azure.' },
+  { d:1, q:'What is ECMP (Equal-Cost Multi-Path) routing in Azure?', a:'ECMP allows traffic to be distributed across multiple equal-cost paths to the same destination. Azure supports ECMP for ExpressRoute connections and some VPN configurations for load distribution and redundancy.' },
+  { d:1, q:'How do you route traffic between two spoke VNets in a hub-and-spoke model without NVA?', a:'You need either: <strong>1</strong>. A VPN or ExpressRoute gateway with transit enabled (using "Allow Gateway Transit" on hub and "Use Remote Gateways" on spokes) or <strong>2</strong>. Direct peering between spokes, or <strong>3</strong>. An NVA in the hub with UDRs.' },
+
+  // ── DOMAIN 2: Load Balancing & Traffic ──
+  { d:2, q:'What are the four Azure load balancing services?', a:'<strong>1. Azure Load Balancer</strong> (L4, regional). <strong>2. Application Gateway</strong> (L7, regional). <strong>3. Azure Front Door</strong> (L7, global). <strong>4. Traffic Manager</strong> (DNS-based, global). Choose based on layer and scope.' },
+  { d:2, q:'What is the difference between a Public and Internal Azure Load Balancer?', a:'<strong>Public Load Balancer</strong>: has a public IP, balances internet-facing traffic. <strong>Internal Load Balancer (ILB)</strong>: uses a private IP, balances traffic within a VNet or from on-premises. ILB is used for internal services.' },
+  { d:2, q:'What are the SKUs of Azure Load Balancer and key differences?', a:'<strong>Basic SKU</strong>: free, limited to 300 instances, no SLA, no AZ support, open by default. <strong>Standard SKU</strong>: paid, up to 1000 instances, 99.99% SLA, zone-redundant, secure by default (NSG required). Basic is being deprecated.' },
+  { d:2, q:'What is a Load Balancer Backend Pool?', a:'The backend pool is the group of VMs or VM Scale Set instances that receive traffic from the load balancer. Members must be in the same VNet and can be added by NIC or by IP address.' },
+  { d:2, q:'What is a Health Probe in Azure Load Balancer?', a:'A health probe checks if backend instances are healthy. Supports <strong>TCP, HTTP, and HTTPS</strong> probes. If a backend fails the probe, the load balancer removes it from rotation until it becomes healthy again.' },
+  { d:2, q:'What is Session Persistence (affinity) in Azure Load Balancer?', a:'Session persistence pins a client to the same backend instance. Options: <strong>None</strong> (default 5-tuple hash), <strong>Client IP</strong> (2-tuple), <strong>Client IP and Protocol</strong> (3-tuple).' },
+  { d:2, q:'What is HA Ports in Azure Load Balancer and when is it used?', a:'HA Ports is a Standard LB feature that creates a single load-balancing rule for <strong>all ports (0) and all protocols</strong>. Used with internal load balancers in front of NVAs to load balance all traffic transparently.' },
+  { d:2, q:'What is Azure Application Gateway?', a:'Application Gateway is a regional L7 load balancer and application delivery controller. Features include: URL-based routing, SSL/TLS termination, Web Application Firewall (WAF), cookie-based session affinity, and HTTP header rewriting.' },
+  { d:2, q:'What are the SKUs of Azure Application Gateway?', a:'<strong>Standard_v2</strong>: standard L7 load balancing with autoscaling. <strong>WAF_v2</strong>: includes Web Application Firewall for OWASP rule protection. V2 SKUs support zone redundancy and autoscaling.' },
+  { d:2, q:'What is the WAF on Application Gateway and what modes does it support?', a:'WAF (Web Application Firewall) protects against common web attacks (OWASP top 10). Modes: <strong>Detection</strong> (logs but does not block) and <strong>Prevention</strong> (actively blocks malicious requests).' },
+  { d:2, q:'What is Azure Front Door?', a:'Azure Front Door is a global, scalable entry point using the Microsoft edge network for fast delivery of web apps. Features: global load balancing, SSL offload, URL routing, WAF, caching, and <strong>Anycast routing</strong>.' },
+  { d:2, q:'What is the difference between Azure Front Door and Traffic Manager?', a:'<strong>Front Door</strong>: L7 proxy that terminates connections at the edge, provides caching and WAF. <strong>Traffic Manager</strong>: DNS-based L4/L7 routing that redirects clients to the best endpoint — it does NOT proxy traffic.' },
+  { d:2, q:'What routing methods does Azure Traffic Manager support?', a:'<strong>1. Priority</strong>. <strong>2. Weighted</strong>. <strong>3. Performance</strong> (latency-based). <strong>4. Geographic</strong>. <strong>5. Multivalue</strong> (multiple healthy endpoints). <strong>6. Subnet</strong> (user IP ranges to endpoints).' },
+  { d:2, q:'What is an Application Gateway Listener?', a:'A listener is a logical entity that checks for connection requests using the protocol, port, host, and IP. <strong>Basic listener</strong>: one domain. <strong>Multi-site listener</strong>: multiple domains/hostnames on the same gateway.' },
+  { d:2, q:'What is path-based routing in Application Gateway?', a:'Path-based routing allows routing to different backend pools based on the URL path (e.g., /images/* → pool1, /video/* → pool2). Configured via <strong>URL path map</strong> rules in the gateway.' },
+  { d:2, q:'What is Azure CDN and how does it relate to Front Door?', a:'Azure CDN caches static content at edge nodes globally to reduce latency. Azure Front Door Standard/Premium now includes integrated CDN capabilities, combining dynamic acceleration with static caching in one service.' },
+
+  // ── DOMAIN 3: Hybrid Connectivity ──
+  { d:3, q:'What are the three main options for hybrid connectivity in Azure?', a:'<strong>1. Azure VPN Gateway</strong> – encrypted S2S, P2S VPN over internet. <strong>2. Azure ExpressRoute</strong> – private dedicated circuit bypassing internet. <strong>3. Azure Virtual WAN</strong> – managed hub for large-scale hybrid networking.' },
+  { d:3, q:'What is an Azure VPN Gateway?', a:'A VPN Gateway is a managed service that sends encrypted traffic between an Azure VNet and an on-premises location over the public internet using IPsec/IKE tunnels. Requires the <strong>GatewaySubnet</strong>.' },
+  { d:3, q:'What are the VPN Gateway SKUs and their throughput?', a:'Key SKUs: <strong>Basic</strong> (100Mbps, no AZ, no BGP), <strong>VpnGw1</strong> (650Mbps), <strong>VpnGw2</strong> (1Gbps), <strong>VpnGw3</strong> (1.25Gbps), and AZ variants (VpnGw1AZ, etc.) for zone redundancy. Max throughput with VpnGw5AZ is ~10Gbps.' },
+  { d:3, q:'What VPN types are available for Azure VPN Gateway?', a:'<strong>Route-based VPN</strong>: uses virtual tunnel interfaces and BGP; supports IKEv2, more flexible. <strong>Policy-based VPN</strong>: uses static routes defined by policy; only IKEv1, limited to one tunnel. Route-based is recommended.' },
+  { d:3, q:'What is Point-to-Site (P2S) VPN in Azure?', a:'P2S VPN allows individual client computers to connect to an Azure VNet. Protocols: <strong>OpenVPN</strong> (TCP 443), <strong>SSTP</strong> (Windows only), <strong>IKEv2</strong>. Authentication: certificates, Azure AD, or RADIUS.' },
+  { d:3, q:'What is Site-to-Site (S2S) VPN?', a:'S2S VPN creates an IPsec/IKE tunnel between an Azure VPN Gateway and an on-premises VPN device over the internet. Requires a <strong>Local Network Gateway</strong> object representing the on-premises VPN device and address space.' },
+  { d:3, q:'What is a Local Network Gateway in Azure?', a:'A Local Network Gateway is an Azure object representing the <strong>on-premises VPN device</strong>. It stores the on-prem public IP address and the address prefixes of the on-premises network to be routed through the VPN.' },
+  { d:3, q:'What is VPN Gateway active-active mode?', a:'In active-active mode, both gateway instances have unique public IPs and maintain separate tunnels to the on-prem device. This provides <strong>higher availability and throughput</strong> compared to active-standby. Requires a BGP-capable on-prem device.' },
+  { d:3, q:'What is Azure ExpressRoute?', a:'ExpressRoute provides a private, dedicated connection between on-premises networks and Azure via a connectivity provider. Traffic does <strong>not traverse the public internet</strong>, offering higher reliability, speed, lower latency, and better security.' },
+  { d:3, q:'What are the ExpressRoute peering types?', a:'<strong>Azure Private Peering</strong>: access Azure VNet resources via private IPs. <strong>Microsoft Peering</strong>: access Microsoft 365 and Azure public services. Note: Public Peering has been deprecated.' },
+  { d:3, q:'What are the ExpressRoute circuit SKUs?', a:'<strong>Local</strong>: access only to the local Azure region. <strong>Standard</strong>: access to all regions in the geopolitical region. <strong>Premium</strong>: global reach, more routes, and access to all Azure regions worldwide.' },
+  { d:3, q:'What is ExpressRoute Global Reach?', a:'ExpressRoute Global Reach allows two on-premises sites to communicate through their ExpressRoute circuits via the Microsoft backbone — without traffic touching the public internet. Requires Premium SKU.' },
+  { d:3, q:'What is ExpressRoute FastPath?', a:'FastPath bypasses the ExpressRoute gateway for data plane traffic, sending packets directly to VMs in the VNet, reducing latency. Requires <strong>UltraPerformance or ErGw3AZ</strong> gateway SKU. Control plane still uses the gateway.' },
+  { d:3, q:'What is the difference between ExpressRoute and Site-to-Site VPN?', a:'<strong>ExpressRoute</strong>: private circuit, no internet, higher bandwidth (up to 100Gbps), SLA, but higher cost. <strong>S2S VPN</strong>: uses internet, encrypted IPsec, lower cost, lower bandwidth (up to ~10Gbps gateway limit), suitable as backup.' },
+  { d:3, q:'What is a coexisting ExpressRoute and VPN Gateway configuration used for?', a:'Coexistence allows ExpressRoute as primary path with S2S VPN as a failover. Both connect to the same GatewaySubnet but use different gateway resources. Useful for high availability hybrid designs.' },
+  { d:3, q:'What is an ExpressRoute Gateway?', a:'An ExpressRoute Gateway is a VPN-like gateway in the GatewaySubnet that connects your VNet to an ExpressRoute circuit. SKUs: <strong>Standard, HighPerformance, UltraPerformance, ErGw1AZ, ErGw2AZ, ErGw3AZ</strong>.' },
+
+  // ── DOMAIN 4: Private Access to Services ──
+  { d:4, q:'What is Azure Private Endpoint?', a:'A Private Endpoint is a network interface with a private IP in your VNet that connects to an Azure PaaS service (like Storage, SQL, Key Vault). Traffic stays on the Microsoft backbone, never traverses the internet.' },
+  { d:4, q:'What is Azure Private Link?', a:'Azure Private Link is the underlying technology that enables Private Endpoints. It allows you to expose your own services (behind a Standard Load Balancer) as a Private Link Service that other VNets/subscriptions can connect to via Private Endpoints.' },
+  { d:4, q:'What DNS configuration is required for Private Endpoints to work correctly?', a:'The service\'s public DNS name must resolve to the Private Endpoint\'s private IP. Typically done by creating a <strong>Private DNS Zone</strong> (e.g., privatelink.blob.core.windows.net) and linking it to the VNet.' },
+  { d:4, q:'What is a Private Link Service?', a:'A Private Link Service lets you share your own service (hosted behind a Standard Internal LB) with other Azure customers or internal teams via Private Link. Consumers create a Private Endpoint and connect to your service privately.' },
+  { d:4, q:'What is Azure Private Link Center?', a:'Azure Private Link Center is a portal view for managing Private Endpoints and Private Link Services from a central location, providing visibility into private connectivity across your subscriptions.' },
+  { d:4, q:'Can you access a Private Endpoint from a peered VNet?', a:'Yes. Private Endpoints are accessible from peered VNets in the same or different regions. However, DNS resolution must also be configured correctly in the peered VNet (linking the Private DNS Zone to each VNet).' },
+  { d:4, q:'What is Azure App Service VNet Integration?', a:'VNet Integration allows an App Service (Web App) to make <strong>outbound</strong> calls into resources in a VNet. Regional VNet Integration requires a dedicated /28 subnet delegated to Microsoft.Web/serverFarms.' },
+  { d:4, q:'What is App Service Private Endpoint versus VNet Integration?', a:'<strong>VNet Integration</strong>: outbound from App Service into VNet. <strong>Private Endpoint on App Service</strong>: inbound to App Service from VNet, eliminating public access. Both can be used together for full private app connectivity.' },
+  { d:4, q:'What is subnet delegation in Azure?', a:'Subnet delegation is the process of designating a subnet for use by a specific Azure service (e.g., Azure SQL Managed Instance, App Service). A delegated subnet may have certain NSG and route table restrictions depending on the service.' },
+  { d:4, q:'What is Azure Bastion and what are its benefits?', a:'Azure Bastion is a fully managed PaaS that provides secure RDP/SSH access to VMs through the Azure portal over TLS, without exposing VMs to the internet. No public IP, no open RDP/SSH ports on VMs needed.' },
+  { d:4, q:'What are the Azure Bastion SKUs?', a:'<strong>Basic</strong>: standard RDP/SSH. <strong>Standard</strong>: adds host scaling, IP-based connections, native client support, tunneling. <strong>Developer</strong> (Preview): lightweight, no dedicated subnet, single VM access.' },
+
+  // ── DOMAIN 5: Network Security & Monitoring ──
+  { d:5, q:'What is Azure Firewall?', a:'Azure Firewall is a managed, stateful cloud-native network security service. It provides <strong>FQDN filtering, network rules, application rules, threat intelligence, DNAT, and SNAT</strong>. Deployed in a dedicated subnet (AzureFirewallSubnet).' },
+  { d:5, q:'What are the Azure Firewall SKUs?', a:'<strong>Standard</strong>: FQDN filtering, network/app rules, threat intelligence. <strong>Premium</strong>: adds TLS inspection, IDPS (intrusion detection/prevention), URL filtering, web categories. <strong>Basic</strong>: for SMB, limited features.' },
+  { d:5, q:'What is Threat Intelligence in Azure Firewall?', a:'Threat Intelligence integrates Microsoft\'s threat feed to alert or deny traffic to/from known malicious IPs and domains. Modes: <strong>Alert</strong> (log only) or <strong>Alert and Deny</strong> (block). Enabled on Standard and Premium SKUs.' },
+  { d:5, q:'What is Azure Firewall Policy?', a:'Azure Firewall Policy is a global resource that contains rule collections (NAT, Network, Application) and settings. Policies support <strong>hierarchy</strong>: a base policy can be inherited by child policies for centralized management.' },
+  { d:5, q:'What is IDPS in Azure Firewall Premium?', a:'IDPS (Intrusion Detection and Prevention System) in Firewall Premium uses signature-based detection to identify and block malicious traffic patterns, including exploits and C2 traffic. Modes: <strong>Alert, Alert+Deny, or Off</strong>.' },
+  { d:5, q:'What is Azure DDoS Protection?', a:'Azure DDoS Protection defends against volumetric, protocol, and application-layer attacks. <strong>Basic</strong>: always-on, automatic, included for free. <strong>Standard/Network</strong>: enhanced mitigation tuned per VIP, near real-time telemetry, SLA guarantee.' },
+  { d:5, q:'What are the types of DDoS attacks that Azure DDoS Protection Standard mitigates?', a:'<strong>Volumetric attacks</strong> (floods), <strong>Protocol attacks</strong> (SYN floods, reflection attacks), and <strong>Resource layer (L7) attacks</strong> (in combination with WAF on Application Gateway/Front Door).' },
+  { d:5, q:'What is Azure Network Watcher?', a:'Azure Network Watcher is a regional service offering network monitoring and diagnostic tools: <strong>IP Flow Verify, Next Hop, Connection Monitor, NSG Flow Logs, Packet Capture, Topology, and Connection Troubleshoot</strong>.' },
+  { d:5, q:'What is IP Flow Verify in Network Watcher?', a:'IP Flow Verify checks whether a packet is <strong>allowed or denied</strong> by the NSG rules on a VM\'s NIC and subnet for a given 5-tuple (source/dest IP, port, protocol). It identifies which specific NSG rule is responsible.' },
+  { d:5, q:'What is NSG Flow Logs and what does it capture?', a:'NSG Flow Logs record all IP traffic through an NSG, logging source/dest IP, port, protocol, direction (in/out), and allow/deny decision. Stored in a Storage Account and can be analyzed with <strong>Traffic Analytics</strong> in Log Analytics.' },
+  { d:5, q:'What is Traffic Analytics in Azure?', a:'Traffic Analytics processes NSG Flow Logs and provides visualizations in Azure Monitor / Log Analytics. It shows top talkers, open ports, traffic distribution, and security threats in near real-time.' },
+  { d:5, q:'What is Connection Monitor in Network Watcher?', a:'Connection Monitor provides end-to-end connectivity monitoring between sources (VMs, VNet) and destinations (URLs, IPs, Azure resources). It measures latency, packet loss, and reachability on a schedule.' },
+  { d:5, q:'What is the Next Hop tool in Network Watcher?', a:'The Next Hop tool determines where traffic from a given VM and destination IP is being sent — showing the <strong>next hop type and IP</strong> based on the effective route table. Useful for diagnosing routing issues.' },
+  { d:5, q:'What is Azure Monitor and how does it relate to networking?', a:'Azure Monitor collects logs and metrics from Azure resources. For networking, it ingests: NSG Flow Logs, Firewall logs, Load Balancer metrics, Application Gateway access logs, and VPN Gateway diagnostics for analysis and alerting.' },
+  { d:5, q:'What is Just-In-Time (JIT) VM Access in Azure?', a:'JIT VM Access (via Microsoft Defender for Cloud) locks down inbound ports to a VM (RDP/SSH) and only opens them for a limited time when requested. It reduces the attack surface without permanently blocking management access.' },
+  { d:5, q:'What is Azure Web Application Firewall (WAF) and where can it be deployed?', a:'Azure WAF protects web apps against OWASP top 10 and other common web vulnerabilities. It can be deployed on: <strong>Azure Application Gateway</strong> (regional), <strong>Azure Front Door</strong> (global), and <strong>Azure CDN</strong>.' },
+  { d:5, q:'What is the difference between WAF Detection and Prevention modes?', a:'<strong>Detection</strong>: monitors and logs requests that match WAF rules but does not block them — useful during initial deployment/tuning. <strong>Prevention</strong>: actively blocks and logs malicious requests based on configured rules.' },
+  { d:5, q:'What is Packet Capture in Azure Network Watcher?', a:'Packet Capture allows you to create packet capture sessions on a VM (requires Network Watcher Agent extension). Captures are saved to a Storage Account or local VM disk and can be analyzed with Wireshark or similar tools.' },
+  { d:5, q:'What is Azure Firewall Manager?', a:'Azure Firewall Manager provides centralized security policy management across multiple Azure Firewalls and virtual hubs. It integrates with Azure Virtual WAN and supports hierarchical firewall policies.' },
+  { d:5, q:'What is the AzureFirewallSubnet requirement?', a:'Azure Firewall must be deployed in a dedicated subnet named exactly <strong>AzureFirewallSubnet</strong> with a minimum size of /26. The subnet must not contain other resources.' },
+
+  // ── ADDITIONAL MIXED QUESTIONS ──
+  { d:0, q:'What is an Application Security Group (ASG)?', a:'An ASG lets you group VMs by application role (e.g., WebServers, DBServers) and reference those groups in NSG rules instead of explicit IP addresses. This simplifies NSG rule management as VMs scale.' },
+  { d:0, q:'What is Azure Virtual Network Manager (AVNM)?', a:'Azure Virtual Network Manager is a management service that lets you group, configure, and deploy VNet policies (connectivity and security admin rules) at scale across subscriptions and regions centrally.' },
+  { d:0, q:'What is a Security Admin Rule in AVNM?', a:'Security Admin Rules in Azure Virtual Network Manager are high-priority rules that <strong>override</strong> NSG rules. They allow network admins to enforce baseline security policies that cannot be bypassed by individual VNet owners.' },
+  { d:1, q:'What is the difference between static and dynamic routing in Azure VPN?', a:'<strong>Static (Policy-based)</strong>: routes defined manually in a policy; only one tunnel. <strong>Dynamic (Route-based)</strong>: uses BGP or virtual tunnel interfaces to dynamically learn and propagate routes; supports multiple tunnels and P2S.' },
+  { d:1, q:'What is an effective route in Azure?', a:'Effective routes show the actual routes applied to a NIC, combining system routes, UDRs, and BGP-propagated routes. Viewable in the portal or via <code>az network nic show-effective-route-table</code>. Essential for troubleshooting routing issues.' },
+  { d:2, q:'What is a backend pool address in Application Gateway?', a:'A backend pool address can be a VM NIC, VM Scale Set, public/private IP, FQDN, or App Service. Application Gateway supports multiple backend pools, each routable via URL-path or host-based rules.' },
+  { d:2, q:'What is rewrite rules in Azure Application Gateway?', a:'Rewrite rules allow you to modify HTTP request and response headers, and rewrite URL paths/query strings as traffic passes through Application Gateway — without changing the backend configuration.' },
+  { d:3, q:'What is the maximum bandwidth available on an ExpressRoute circuit?', a:'ExpressRoute circuits support bandwidths from <strong>50 Mbps up to 100 Gbps</strong>, depending on the connectivity provider and peering location. ExpressRoute Direct supports 10Gbps or 100Gbps natively.' },
+  { d:3, q:'What is ExpressRoute Direct?', a:'ExpressRoute Direct provides direct physical connectivity to Microsoft\'s global network at peering locations. It offers <strong>10Gbps or 100Gbps</strong> ports and supports multiple ExpressRoute circuits over the same physical connection.' },
+  { d:4, q:'What Azure services support Private Endpoints?', a:'Many services support Private Endpoints including: <strong>Azure Storage, Azure SQL Database, Azure Cosmos DB, Azure Key Vault, Azure App Service, Azure Kubernetes Service, Azure Container Registry, Azure Monitor</strong>, and many more.' },
+  { d:5, q:'What is Microsoft Defender for Cloud (formerly Security Center) in networking context?', a:'Microsoft Defender for Cloud provides security posture management and threat detection. For networking, it identifies: exposed management ports, missing NSGs, VMs without DDoS protection, and unencrypted traffic risks.' },
+  { d:0, q:'What is the purpose of a Service Tag in NSG rules?', a:'Service Tags represent groups of IP prefixes for Azure services (e.g., <strong>AzureCloud, Storage, Sql, AppService</strong>). Using service tags in NSG rules removes the need to manually maintain IP lists — Azure updates them automatically.' },
+  { d:5, q:'What are the two types of rules in Azure Firewall?', a:'<strong>Network rules</strong>: L3/L4 filter by IP, port, protocol. <strong>Application rules</strong>: filter by FQDN (domain name) for outbound HTTP/HTTPS traffic. Also DNAT rules for inbound traffic translation.' },
+  { d:2, q:'What is Outbound Rules in Azure Standard Load Balancer?', a:'Outbound rules allow you to explicitly configure SNAT for outbound internet traffic from backend pool VMs. You can control the public IP(s) used, the number of SNAT ports allocated per VM, and idle timeout.' },
+  { d:3, q:'What is the BGP ASN used by Azure VPN Gateways by default?', a:'Azure VPN Gateways use <strong>ASN 65515</strong> by default for BGP peering. This can be customized when creating the gateway. On-premises ASNs must not conflict with reserved Azure ASNs.' },
+  { d:4, q:'What is the difference between a Private Endpoint and VNet Service Endpoint in terms of network flow?', a:'<strong>Service Endpoint</strong>: traffic exits VNet to service\'s public IP via optimized route on backbone; service still sees public IP. <strong>Private Endpoint</strong>: traffic stays entirely in private IP space; service gets a private IP in your VNet. Private Endpoint is more restrictive and recommended.' },
+  { d:5, q:'What log types does Azure Firewall generate?', a:'Azure Firewall generates: <strong>Application rule logs, Network rule logs, DNS proxy logs, Threat intelligence logs, IDPS logs (Premium)</strong>. These are sent to Log Analytics, Storage Account, or Event Hub.' },
+  { d:0, q:'What is an Azure Virtual Network Gateway?', a:'An Azure Virtual Network Gateway is a resource deployed in the GatewaySubnet that provides VPN or ExpressRoute connectivity. Each VNet can have up to <strong>one VPN gateway and one ExpressRoute gateway</strong>.' },
+  { d:2, q:'What is Azure Traffic Manager\'s Performance routing method?', a:'Performance routing directs clients to the endpoint with the <strong>lowest network latency</strong> for the client\'s location. Azure uses an internet latency table updated regularly to determine the best endpoint for each client region.' },
+  { d:3, q:'What IKE versions does Azure VPN Gateway support?', a:'Azure VPN Gateway supports both <strong>IKEv1 and IKEv2</strong>. Route-based gateways support both; Policy-based gateways only support IKEv1. IKEv2 is recommended for better security and compatibility.' },
+  { d:5, q:'What is the default action for a Standard Load Balancer backend pool VM with no NSG?', a:'Standard Load Balancer VMs with no NSG will <strong>deny all inbound traffic</strong> by default because Standard LB is "secure by default." You must add NSG rules explicitly to allow traffic. Basic LB is open by default.' },
+  { d:4, q:'What is Private DNS Zone auto-registration in Azure?', a:'When you link a Private DNS Zone to a VNet with auto-registration enabled, Azure automatically registers DNS A records for VMs in that VNet in the Private DNS Zone as they are created or get IPs assigned.' },
+  { d:5, q:'What is Connection Troubleshoot in Network Watcher?', a:'Connection Troubleshoot performs an on-demand connectivity check between a source VM and a destination (IP, URI, or FQDN). It reports whether the connection is reachable, the hop-by-hop path, latency, and identifies blocking rules.' },
+  { d:1, q:'What happens when two UDRs have the same prefix length in Azure?', a:'When two routes have the same address prefix from the same source type, Azure uses the most recently applied one. However, UDR always wins over system and BGP routes of the same prefix. If truly equal, behavior is undefined — design to avoid this.' },
+  { d:0, q:'Can a VNet span multiple Azure regions?', a:'<strong>No</strong>. A VNet is scoped to a single Azure region. To connect VNets in different regions, you use <strong>Global VNet Peering</strong> or hub-based connectivity via Virtual WAN or VPN/ExpressRoute.' },
+  { d:2, q:'What is an Application Gateway v2 autoscaling?', a:'Application Gateway v2 supports <strong>autoscaling</strong> based on traffic load, automatically adding or removing capacity units. You set a minimum and optional maximum instance count. This eliminates manual scaling and reduces over-provisioning costs.' },
+  { d:3, q:'What is VPN Gateway transit routing?', a:'Transit routing allows spoke VNets peered to a hub VNet (containing a VPN Gateway) to use that gateway to access on-premises networks. Requires <strong>"Allow Gateway Transit"</strong> on the hub peering and <strong>"Use Remote Gateways"</strong> on spoke peerings.' },
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let mode = 'flashcard';
+let filteredCards = [...ALL_CARDS];
+let currentDomain = 'all';
+let cardIndex = 0;
+let isFlipped = false;
+let knownSet = new Set();
+let seenSet = new Set();
+
+// Quiz state
+let quizCards = [];
+let quizIndex = 0;
+let quizScore = 0;
+let quizAnswered = false;
+
+// ============================================================
+// UTILITY
+// ============================================================
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function applyFilter() {
+  filteredCards = currentDomain === 'all'
+    ? [...ALL_CARDS]
+    : ALL_CARDS.filter(c => c.d === currentDomain);
+}
+
+// ============================================================
+// PROGRESS
+// ============================================================
+function updateProgress() {
+  const total = ALL_CARDS.length;
+  const known = knownSet.size;
+  const seen = seenSet.size;
+  document.getElementById('stat-seen').textContent = seen;
+  document.getElementById('stat-known').textContent = known;
+  document.getElementById('stat-total').textContent = total;
+  const pct = Math.round((known / total) * 100);
+  document.getElementById('prog-bar').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = pct + '% mastered';
+}
+
+// ============================================================
+// FLASHCARD
+// ============================================================
+function renderCard() {
+  if (!filteredCards.length) return;
+  const card = filteredCards[cardIndex];
+  const globalIdx = ALL_CARDS.indexOf(card);
+  seenSet.add(globalIdx);
+  document.getElementById('card-num').textContent = cardIndex + 1;
+  document.getElementById('card-total').textContent = filteredCards.length;
+  document.getElementById('card-domain-tag').textContent = DOMAINS[card.d];
+  document.getElementById('card-question').innerHTML = card.q;
+  document.getElementById('card-answer').innerHTML = card.a;
+  isFlipped = false;
+  document.getElementById('card-inner').classList.remove('flipped');
+  updateProgress();
+}
+
+function flipCard() {
+  isFlipped = !isFlipped;
+  document.getElementById('card-inner').classList.toggle('flipped', isFlipped);
+}
+
+function nextCard() {
+  cardIndex = (cardIndex + 1) % filteredCards.length;
+  renderCard();
+}
+
+function prevCard() {
+  cardIndex = (cardIndex - 1 + filteredCards.length) % filteredCards.length;
+  renderCard();
+}
+
+function markKnown() {
+  const globalIdx = ALL_CARDS.indexOf(filteredCards[cardIndex]);
+  knownSet.add(globalIdx);
+  updateProgress();
+  nextCard();
+}
+
+function markUnknown() {
+  const globalIdx = ALL_CARDS.indexOf(filteredCards[cardIndex]);
+  knownSet.delete(globalIdx);
+  updateProgress();
+  nextCard();
+}
+
+function shuffleCards() {
+  filteredCards = shuffle(filteredCards);
+  cardIndex = 0;
+  renderCard();
+}
+
+function resetProgress() {
+  knownSet.clear(); seenSet.clear();
+  cardIndex = 0;
+  updateProgress();
+  renderCard();
+}
+
+// ============================================================
+// DOMAIN FILTER
+// ============================================================
+function filterDomain(d) {
+  currentDomain = d;
+  document.querySelectorAll('.domain-btn').forEach((b, i) => {
+    b.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  applyFilter();
+  cardIndex = 0;
+  if (mode === 'flashcard') renderCard();
+  if (mode === 'quiz') startQuiz();
+}
+
+// ============================================================
+// QUIZ
+// ============================================================
+function generateOptions(correct, allCards) {
+  const wrongPool = shuffle(allCards.filter(c => c !== correct));
+  const wrongs = wrongPool.slice(0, 3);
+  const options = shuffle([correct, ...wrongs]);
+  return options;
+}
+
+function startQuiz() {
+  quizCards = shuffle(filteredCards).slice(0, Math.min(20, filteredCards.length));
+  quizIndex = 0; quizScore = 0;
+  document.getElementById('quiz-area').style.display = 'block';
+  document.getElementById('results-panel').classList.remove('show');
+  renderQuizQ();
+}
+
+function renderQuizQ() {
+  if (quizIndex >= quizCards.length) { showResults(); return; }
+  quizAnswered = false;
+  const card = quizCards[quizIndex];
+  const options = generateOptions(card, ALL_CARDS);
+  document.getElementById('q-num').textContent = quizIndex + 1;
+  document.getElementById('q-total').textContent = quizCards.length;
+  document.getElementById('quiz-question').innerHTML =
+    `<div class="quiz-q-label">Question ${quizIndex+1} of ${quizCards.length}</div>${card.q}`;
+  const ol = document.getElementById('options-list');
+  ol.innerHTML = '';
+  const letters = ['A','B','C','D'];
+  options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.innerHTML = `<span class="option-letter">${letters[i]}</span><span>${opt.a.replace(/<[^>]*>/g,'').substring(0,120)}${opt.a.length > 120 ? '…' : ''}</span>`;
+    btn.onclick = () => selectOption(btn, opt, card, options);
+    ol.appendChild(btn);
+  });
+  document.getElementById('explanation').classList.remove('show');
+  document.getElementById('explanation').innerHTML = '';
+  document.getElementById('next-quiz-btn').style.display = 'none';
+}
+
+function selectOption(btn, selected, correct, allOptions) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const isCorrect = selected === correct;
+  if (isCorrect) { quizScore++; btn.classList.add('correct'); }
+  else { btn.classList.add('wrong'); }
+  // Highlight correct
+  document.querySelectorAll('.option').forEach((b, i) => {
+    b.classList.add('locked');
+    if (allOptions[i] === correct && !isCorrect) b.classList.add('correct');
+  });
+  const exp = document.getElementById('explanation');
+  exp.innerHTML = `<strong>${isCorrect ? '✓ Correct!' : '✗ Incorrect'}</strong> — ${correct.a}`;
+  exp.classList.add('show');
+  document.getElementById('next-quiz-btn').style.display = 'inline-block';
+}
+
+function nextQuizQ() {
+  quizIndex++;
+  renderQuizQ();
+}
+
+function endQuiz() { showResults(); }
+
+function showResults() {
+  document.getElementById('quiz-area').style.display = 'none';
+  const panel = document.getElementById('results-panel');
+  panel.classList.add('show');
+  const pct = Math.round((quizScore / quizCards.length) * 100);
+  document.getElementById('results-score').textContent = pct + '%';
+  const titles = pct >= 80 ? ['Excellent Work! 🎉','You\'re on track for AZ-700!'] :
+                 pct >= 60 ? ['Good Progress! 📈','Keep studying these topics.'] :
+                             ['Keep Practicing! 💪','Review the Study Guide to strengthen weak areas.'];
+  document.getElementById('results-title').textContent = `${quizScore}/${quizCards.length} — ${titles[0]}`;
+  document.getElementById('results-sub').textContent = titles[1];
+}
+
+function restartQuiz() { startQuiz(); }
+
+// ============================================================
+// STUDY GUIDE
+// ============================================================
+const GUIDE_DATA = [
+  {
+    title: '🌐 VNet Design & Implementation',
+    cls: 'd0',
+    items: [
+      {name:'RFC 1918 Private Ranges', desc:'10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16. Plan address space carefully — overlapping ranges prevent peering.'},
+      {name:'Reserved IPs per Subnet', desc:'Azure always reserves 5 IPs: .0 network, .1 gateway, .2-.3 DNS, last broadcast. A /29 gives only 3 usable hosts.'},
+      {name:'NSG Rule Priority', desc:'Lower number = higher priority. Range 100–4096. Default deny-all is 65500. UDR rules evaluated before NSG for routing.'},
+      {name:'Service Endpoints vs Private Endpoints', desc:'Service Endpoints: public IP stays, backbone routing. Private Endpoints: private IP in VNet, fully private. Private Endpoint is preferred for zero-trust.'},
+      {name:'Private DNS Zones', desc:'Must be linked to each VNet that needs resolution. Auto-registration for VM records. Naming follows privatelink.*.azure.com patterns.'},
+      {name:'Azure DNS Private Resolver', desc:'Inbound endpoint for on-prem → Azure DNS. Outbound endpoint for Azure → on-prem DNS. Replaces IaaS DNS forwarders.'},
+      {name:'NAT Gateway', desc:'Provides scalable outbound SNAT. Supports up to 16 public IPs × 64,512 ports each = ~1M SNAT ports per subnet.'},
+      {name:'Virtual WAN SKUs', desc:'Basic: S2S VPN only. Standard: all connection types + inter-hub. Choose Standard for complex hybrid/multi-region topologies.'},
+      {name:'Hub-and-Spoke Design', desc:'Centralize shared services (firewall, DNS, gateway) in hub. Spokes use peering. Add NVA or Azure Firewall in hub for traffic inspection.'},
+      {name:'Application Security Groups', desc:'Group VMs logically (WebTier, DbTier) and reference in NSG rules. Scales better than IP-based rules in dynamic environments.'},
+    ]
+  },
+  {
+    title: '🗺️ Routing',
+    cls: 'd1',
+    items: [
+      {name:'UDR Next Hop Types', desc:'Virtual Appliance (NVA IP), VNet Gateway, VNet (local), Internet, None (blackhole). Must match intent for traffic steering.'},
+      {name:'BGP Basics', desc:'ASN 65515 is Azure default. On-prem must use different ASN. BGP enables dynamic route exchange for VPN and ExpressRoute. Supports route filtering.'},
+      {name:'IP Forwarding', desc:'Must be enabled on any NIC acting as a router or NVA. Enable at both NIC level (Azure) and OS level (IP forwarding in Linux/Windows).'},
+      {name:'Azure Route Server', desc:'Requires RouteServerSubnet (/27+). Exchanges BGP routes between NVA and VNet automatically. Branch-to-branch routing capability.'},
+      {name:'Effective Routes', desc:'View via portal → NIC → Effective Routes or CLI. Shows combined system, UDR, and BGP routes. First step for routing troubleshooting.'},
+      {name:'Forced Tunneling', desc:'Override 0.0.0.0/0 system route with UDR pointing to VNet Gateway. Redirects all internet-bound traffic to on-prem. Breaks direct internet egress.'},
+    ]
+  },
+  {
+    title: '⚖️ Load Balancing & Traffic',
+    cls: 'd2',
+    items: [
+      {name:'Load Balancing Decision Tree', desc:'Global + DNS-based → Traffic Manager. Global + L7/proxy → Front Door. Regional + L7 → App Gateway. Regional + L4 → Azure Load Balancer.'},
+      {name:'LB Standard vs Basic', desc:'Standard: SLA, zone-redundant, NSG required, 1000 backend instances. Basic: no SLA, no zones, open by default, 300 instances. Basic being deprecated.'},
+      {name:'Health Probe Protocols', desc:'TCP, HTTP, HTTPS. HTTP/S probes expect 200 OK. Probe interval: 5s default. Unhealthy threshold: 2 failures. Design probes to test actual app health.'},
+      {name:'HA Ports', desc:'Protocol: All, Port: 0. Only on Internal Standard LB. Load balances all ports/protocols to NVA backends. Eliminates need for per-port rules.'},
+      {name:'App Gateway Components', desc:'Frontend IP → Listener → Rule → Backend Pool → HTTP Settings → Backend. SSL termination at listener. Path rules in URL Path Map.'},
+      {name:'WAF Rule Sets', desc:'OWASP 3.2 (recommended), 3.1, 3.0, 2.2.9. Custom rules also supported. Exclusions for false positives. Log to Log Analytics for analysis.'},
+      {name:'Traffic Manager Routing', desc:'Priority → failover. Weighted → A/B testing. Performance → lowest latency. Geographic → data sovereignty. Subnet → user IP-based routing.'},
+      {name:'Front Door vs CDN', desc:'Front Door Standard/Premium includes CDN. Front Door Classic is legacy. Use Front Door for dynamic acceleration + WAF + CDN combined use cases.'},
+    ]
+  },
+  {
+    title: '🔌 Hybrid Connectivity',
+    cls: 'd3',
+    items: [
+      {name:'VPN Gateway SKUs', desc:'VpnGw1=650Mbps, VpnGw2=1Gbps, VpnGw3=1.25Gbps, VpnGw4=5Gbps, VpnGw5=10Gbps. AZ suffix = zone-redundant. Resize with minimal downtime.'},
+      {name:'ExpressRoute Peering Types', desc:'Private Peering: VNet resources, private IPs. Microsoft Peering: M365, Azure public services. Public Peering is deprecated — migrate to Microsoft Peering.'},
+      {name:'ExpressRoute SKUs', desc:'Local: local region only (unlimited data). Standard: geopolitical region. Premium: global, 10K routes, more VNet links. Global Reach: site-to-site via backbone (Premium required).'},
+      {name:'ExpressRoute Bandwidth', desc:'50Mbps to 10Gbps via providers. ExpressRoute Direct: 10Gbps or 100Gbps ports. QinQ encapsulation on Direct. Multiple circuits per Direct port.'},
+      {name:'VPN Active-Active', desc:'Both instances active, dual public IPs, separate tunnels. Requires BGP. Higher aggregate throughput. On-prem device must support dual tunnels.'},
+      {name:'Coexisting ER + VPN', desc:'ExpressRoute as primary, VPN as failover. Both use GatewaySubnet. Deploy separate gateway resources. UltraPerformance ER SKU required for coexistence.'},
+      {name:'FastPath', desc:'Bypasses gateway for data plane. Requires UltraPerformance or ErGw3AZ. Supports Private Endpoints and certain VNet-to-VNet scenarios. Control plane still via gateway.'},
+      {name:'P2S Authentication', desc:'Certificate-based (self-signed or CA), Azure AD (OpenVPN only), RADIUS server. Supports split tunneling. Client config auto-generated from gateway.'},
+    ]
+  },
+  {
+    title: '🔒 Private Access to Services',
+    cls: 'd4',
+    items: [
+      {name:'Private Endpoint DNS', desc:'Auto-creates A record in privatelink DNS zone. Must link zone to each VNet. On-prem: conditional forwarder → Azure DNS Private Resolver inbound endpoint.'},
+      {name:'Private Link Service', desc:'Your custom service behind Standard ILB exposed via Private Link. Consumer creates Private Endpoint → connection request → you approve. Cross-tenant supported.'},
+      {name:'VNet Integration (App Service)', desc:'Outbound from App Service to VNet. Requires delegated /28+ subnet. Regional VNet Integration for same-region VNets. Does not grant inbound private access.'},
+      {name:'Azure Bastion Tiers', desc:'Basic: portal RDP/SSH only. Standard: scaling, native client, IP-based (non-Azure VM), tunneling, custom ports. Dev: no subnet needed, single VM.'},
+      {name:'Subnet Delegation', desc:'Assigns subnet to specific service. Restricts what else can be in subnet. Required for: SQL MI, App Service Env, Azure Batch, Databricks, and more.'},
+      {name:'Private Endpoint from Peered VNet', desc:'Accessible across peering. DNS zone must also be linked to the consuming VNet. Transitive access not supported — each VNet needs direct peering to hub or its own link.'},
+    ]
+  },
+  {
+    title: '🛡️ Network Security & Monitoring',
+    cls: 'd5',
+    items: [
+      {name:'Azure Firewall vs NSG', desc:'NSG: subnet/NIC level L3-L4 filtering. Azure Firewall: full stateful FQDN-aware firewall with logging. Use NSG for micro-segmentation, Firewall for centralized egress control.'},
+      {name:'Firewall SKU Comparison', desc:'Basic: SMB, limited rules. Standard: FQDN, threat intel, app/network/NAT rules. Premium: TLS inspection, IDPS, URL filtering, web categories.'},
+      {name:'DDoS Protection Tiers', desc:'Basic: automatic, free, always-on. Standard/Network: per-VNet, tuned policies, telemetry, cost protection SLA, rapid response team ($2,944+/mo).'},
+      {name:'Network Watcher Tools', desc:'IP Flow Verify (NSG check), Next Hop (route check), Connection Monitor (ongoing), NSG Flow Logs (all flows), Packet Capture, Topology view, Connection Troubleshoot.'},
+      {name:'NSG Flow Logs v2', desc:'Version 2 adds byte/packet counts. Store in Storage Account. Process with Traffic Analytics in Log Analytics for visual insights and threat detection.'},
+      {name:'JIT Access', desc:'Available via Defender for Cloud. Locks RDP/SSH (22/3389) by default. Opens only on request for a time-limited window with source IP restriction. Logs all access.'},
+      {name:'WAF Deployment Options', desc:'Application Gateway WAF_v2: regional. Front Door WAF: global edge. Both support custom rules, managed rules (OWASP), rate limiting, geo-filtering.'},
+      {name:'Firewall Policy Hierarchy', desc:'Base policy → child policies inherit base rules. Child can override/add. Enables enterprise-wide baseline with team-level customization. Works with Firewall Manager.'},
+    ]
+  }
+];
+
+function renderGuide() {
+  const el = document.getElementById('guide-content');
+  el.innerHTML = GUIDE_DATA.map(section => `
+    <div class="guide-section">
+      <h2>${section.title}</h2>
+      <div class="guide-grid">
+        ${section.items.map(item => `
+          <div class="guide-card">
+            <span class="domain-chip ${section.cls}">${section.cls.replace('d','Domain ')}</span>
+            <h3>${item.name}</h3>
+            <p>${item.desc}</p>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// MODE SWITCHING
+// ============================================================
+function switchMode(m) {
+  mode = m;
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', ['flashcard','quiz','guide'][i] === m);
+  });
+  document.getElementById('flashcard-mode').style.display = m === 'flashcard' ? 'block' : 'none';
+  document.getElementById('quiz-mode').style.display = m === 'quiz' ? 'block' : 'none';
+  document.getElementById('guide-mode').style.display = m === 'guide' ? 'block' : 'none';
+  if (m === 'quiz') startQuiz();
+  if (m === 'guide') renderGuide();
+  if (m === 'flashcard') renderCard();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+renderCard();
+updateProgress();
+</script>
+</body>
+</html>
